@@ -1,0 +1,31 @@
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Go build
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# Go workspace
+vendor/
+
+# Test & coverage
+coverage.out
+coverage.html
+*.prof
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.local
