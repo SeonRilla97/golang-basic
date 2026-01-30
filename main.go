@@ -1,39 +1,15 @@
 package main
 
-import (
-	"fmt"
-	"time"
-)
-
-type Result struct {
-	ID    int
-	Value int
-}
-
-func worker(id int, done <-chan struct{}, jobs <-chan int) {
-	for {
-		select {
-		case <-done:
-			fmt.Printf("워커 %d 종료\n", id)
-			return
-		case job := <-jobs:
-			fmt.Printf("워커 %d: 작업 %d 처리\n", id, job)
-			time.Sleep(100 * time.Millisecond)
-		}
-	}
-}
+import "github.com/gin-gonic/gin"
 
 func main() {
-	funcs := make([]func(), 3)
+	r := gin.Default() // gin.New() 미들웨어 없는 빈 라우터 - 학습 시 Default 사용
 
-	for i := 0; i < 3; i++ {
-		funcs[i] = func() {
-			fmt.Println(i)
-		}
-	}
+	r.GET("/", func(c *gin.Context) {
+		c.JSON(200, gin.H{
+			"message": "Hello World",
+		})
+	})
 
-	for _, f := range funcs {
-		f()
-	}
-	// 출력: 3 3 3 (예상: 0 1 2)
+	r.Run(":8080")
 }
