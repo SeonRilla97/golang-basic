@@ -460,3 +460,218 @@ c.JSON(http.StatusOK, gin.H{"id": id})
 })
 
 ```
+
+
+에러 처리를 위해 미들웨어를 둔다
+
+```go
+func errorHandler() gin.HandlerFunc {
+    return func(c *gin.Context) {
+        c.Next() // 핸들러 실행
+
+        // 에러가 있으면 처리
+        if len(c.Errors) > 0 {
+            err := c.Errors.Last().Err
+
+            // 커스텀 에러 타입 처리
+            switch e := err.(type) {
+            case *ValidationError:
+                c.JSON(http.StatusBadRequest, ErrorResponse{
+                    Code:    "VALIDATION_ERROR",
+                    Message: e.Message,
+                    Details: e.Fields,
+                })
+            case *NotFoundError:
+                c.JSON(http.StatusNotFound, ErrorResponse{
+                    Code:    "NOT_FOUND",
+                    Message: e.Message,
+                })
+            default:
+                c.JSON(http.StatusInternalServerError, ErrorResponse{
+                    Code:    "INTERNAL_ERROR",
+                    Message: "서버 오류가 발생했습니다",
+                })
+            }
+        }
+    }
+}
+
+// 커스텀 에러 타입
+type ValidationError struct {
+    Message string
+    Fields  map[string]string
+}
+
+func (e *ValidationError) Error() string {
+    return e.Message
+}
+
+type NotFoundError struct {
+    Message string
+}
+
+func (e *NotFoundError) Error() string {
+    return e.Message
+}
+
+func main() {
+    r := gin.New()
+    r.Use(gin.Logger())
+    r.Use(gin.Recovery())
+    r.Use(errorHandler())
+
+    r.GET("/users/:id", func(c *gin.Context) {
+        id := c.Param("id")
+
+        if id == "0" {
+            c.Error(&NotFoundError{Message: "사용자를 찾을 수 없습니다"})
+            return
+        }
+
+        c.JSON(http.StatusOK, gin.H{"id": id})
+    })
+
+    r.Run(":8080")
+}
+```
+
+
+### Recovery 미들웨어
+
+gin.Default() 는 기본 포함, 커스텀 필요 시 미들웨어를 작성할 수 있다.
+```go
+func customRecovery() gin.HandlerFunc {
+    return func(c *gin.Context) {
+        defer func() {
+            if err := recover(); err != nil {
+                // 로깅
+                log.Printf("panic recovered: %v", err)
+
+                // 커스텀 에러 응답
+                c.AbortWithStatusJSON(http.StatusInternalServerError, ErrorResponse{
+                    Code:    "INTERNAL_ERROR",
+                    Message: "예기치 않은 오류가 발생했습니다",
+                })
+            }
+        }()
+        c.Next()
+    }
+}
+
+func main() {
+    r := gin.New()
+    r.Use(gin.Logger())
+    r.Use(customRecovery())
+
+    // ...
+}
+```
+
+
+### 응답 표준화
+
+```go
+// filename: response/response.go
+package response
+
+type Response struct {
+    Success bool   `json:"success"`
+    Data    any    `json:"data,omitempty"`
+    Error   *Error `json:"error,omitempty"`
+    Meta    *Meta  `json:"meta,omitempty"`
+}
+
+type Error struct {
+    Code    string `json:"code"`
+    Message string `json:"message"`
+}
+
+type Meta struct {
+    Page    int `json:"page"`
+    PerPage int `json:"per_page"`
+    Total   int `json:"total"`
+}
+
+
+```
+
+헬퍼 함수를 통한 응답 생성
+  -> 에러, 성공, 리스트, 실패 모두 처리 가능
+
+미들웨어 매핑도 되지만, 세밀한 제어가 어렵기 때문에 헬퍼 함수로 도입하는것을 권장
+```go
+// filename: response/response.go
+package response
+
+import (
+    "net/http"
+
+    "github.com/gin-gonic/gin"
+)
+
+// 성공 응답
+func Success(c *gin.Context, data any) {
+    c.JSON(http.StatusOK, Response{
+        Success: true,
+        Data:    data,
+    })
+}
+
+// 생성 성공 응답
+func Created(c *gin.Context, data any) {
+    c.JSON(http.StatusCreated, Response{
+        Success: true,
+        Data:    data,
+    })
+}
+
+// 목록 응답
+func List(c *gin.Context, data any, page, perPage, total int) {
+    c.JSON(http.StatusOK, Response{
+        Success: true,
+        Data:    data,
+        Meta: &Meta{
+            Page:    page,
+            PerPage: perPage,
+            Total:   total,
+        },
+    })
+}
+
+// 에러 응답
+func Fail(c *gin.Context, status int, code, message string) {
+    c.AbortWithStatusJSON(status, Response{
+        Success: false,
+        Error: &Error{
+            Code:    code,
+            Message: message,
+        },
+    })
+}
+
+// 400 Bad Request
+func BadRequest(c *gin.Context, message string) {
+    Fail(c, http.StatusBadRequest, "BAD_REQUEST", message)
+}
+
+// 401 Unauthorized
+func Unauthorized(c *gin.Context, message string) {
+    Fail(c, http.StatusUnauthorized, "UNAUTHORIZED", message)
+}
+
+// 403 Forbidden
+func Forbidden(c *gin.Context, message string) {
+    Fail(c, http.StatusForbidden, "FORBIDDEN", message)
+}
+
+// 404 Not Found
+func NotFound(c *gin.Context, message string) {
+    Fail(c, http.StatusNotFound, "NOT_FOUND", message)
+}
+
+// 500 Internal Server Error
+func InternalError(c *gin.Context, message string) {
+    Fail(c, http.StatusInternalServerError, "INTERNAL_ERROR", message)
+}
+
+```
