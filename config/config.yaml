@@ -1,0 +1,15 @@
+server:
+  port: 8080
+  mode: debug   # debug, release, test
+
+database:
+  host: localhost
+  port: 5432
+  user: gouser
+  password: gopassword
+  name: godb
+  sslmode: disable
+
+pagination:
+  default_size: 10
+  max_size: 100
