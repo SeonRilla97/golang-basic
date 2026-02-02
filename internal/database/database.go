@@ -3,8 +3,9 @@ package database
 import (
 	"gorm-test/internal/config"
 	"gorm-test/internal/domain"
-	"gorm.io/driver/postgres"
 	"log"
+
+	"gorm.io/driver/postgres"
 
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"

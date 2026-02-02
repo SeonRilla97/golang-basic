@@ -1,0 +1,15 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: gorm-test-postgres
+    environment:
+      POSTGRES_USER: gouser
+      POSTGRES_PASSWORD: gopassword
+      POSTGRES_DB: godb
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
