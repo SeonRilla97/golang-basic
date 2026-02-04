@@ -2,6 +2,11 @@ server:
   port: 8080
   mode: debug   # debug, release, test
 
+jwt:
+  secret_key: ${JWT_SECRET_KEY} # v+h0irVI6wf8svteeLQotDPXX8IXHLdx+xpHXJ7JkQ0=
+  access_expiry: 1h
+  refresh_expiry: 168h  # 7일
+
 database:
   host: localhost
   port: 5432
@@ -13,3 +18,16 @@ database:
 pagination:
   default_size: 10
   max_size: 100
+
+
+sentry:
+  dsn: "https://examplePublicKey@o0.ingest.sentry.io/0"
+
+logging:
+  level: info
+  format: json  # json 또는 pretty
+  output: stdout
+  include_caller: true
+  skip_paths:
+    - /health
+    - /metrics  

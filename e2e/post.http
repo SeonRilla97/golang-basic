@@ -1,21 +1,46 @@
 // 게시글 생성
+
 POST http://localhost:8080/api/v1/posts
 Content-Type: application/json
 
 {
-  "title": "첫 번째 게시글",
-  "content": "안녕하세요! Go로 만든 첫 게시글입니다.",
-  "author": "홍길동"
+    "title": "Spring Boot 시작하기",
+    "content": "Spring Boot는 스프링 기반 애플리케이션을 빠르게 개발할 수 있는 프레임워크입니다.",
+    "author": "김개발"
 }
+
 ###
 //게시글 목록 조회
 GET http://localhost:8080/api/v1/posts
 
 ###
-//게시글 상세 조회
-GET http://localhost:8080/api/v1/posts/1
+
+// 커서 페이징 조회
+GET http://localhost:8080/api/v1/posts/cursor?size=5
 
 ###
+
+# 게시글 상세 조회
+GET http://localhost:8080/api/v1/posts/1
+
+
+###
+
+# 제목에서 검색
+GET http://localhost:8080/api/v1/posts?q=Go&type=title
+
+###
+
+# 내용에서 검색
+GET http://localhost:8080/api/v1/posts?q=프로그래밍&type=content
+
+###
+
+# 제목+내용 검색 (기본)
+GET http://localhost:8080/api/v1/posts?q=웹
+
+###
+
 // 게시글 수정
 PUT http://localhost:8080/api/v1/posts/1
 Content-Type: application/json

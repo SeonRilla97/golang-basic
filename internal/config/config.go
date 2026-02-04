@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/spf13/viper"
 )
@@ -13,11 +14,18 @@ type Config struct {
 	Server     ServerConfig
 	Database   DatabaseConfig
 	Pagination PaginationConfig
+	Logging    LoggingConfig
+	Sentry     SentryConfig
+}
+
+type SentryConfig struct {
+	Dsn string `mapstructure:"dsn"`
 }
 
 type ServerConfig struct {
 	Port int    `mapstructure:"port"`
 	Mode string `mapstructure:"mode"`
+	Env  string `mapstructure:"env"`
 }
 
 type DatabaseConfig struct {
@@ -32,6 +40,20 @@ type DatabaseConfig struct {
 type PaginationConfig struct {
 	DefaultSize int `mapstructure:"default_size"`
 	MaxSize     int `mapstructure:"max_size"`
+}
+
+type LoggingConfig struct {
+	Level         string   `mapstructure:"level"`
+	Format        string   `mapstructure:"format"`
+	Output        string   `mapstructure:"output"`
+	IncludeCaller bool     `mapstructure:"include_caller"`
+	SkipPaths     []string `mapstructure:"skip_paths"`
+}
+
+type JWTConfig struct {
+	SecretKey     string        `mapstructure:"secret_key"`
+	AccessExpiry  time.Duration `mapstructure:"access_expiry"`
+	RefreshExpiry time.Duration `mapstructure:"refresh_expiry"`
 }
 
 // DSN 데이터베이스 연결 문자열 생성
